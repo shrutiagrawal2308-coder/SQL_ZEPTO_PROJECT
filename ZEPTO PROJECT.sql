@@ -1,0 +1,131 @@
+-- creation of database--
+CREATE DATABASE zepto_project;
+-- creation of table--
+USE zepto_project;
+
+CREATE TABLE products (
+    CATEGORY VARCHAR(100),
+    NAME VARCHAR(255),
+    MRP INT,
+    DISCOUNTPERCENT INT,
+    AVAILABILITY INT,
+    DISCOUNTEDPRICE INT,
+    WEIGHTINGRAMS INT,
+    OUTOFSTOCK VARCHAR(10),
+    QUANTITY INT
+);
+--  count of rows--
+ SELECT COUNT(*) FROM products;
+ 
+ -- Null Values Check
+SELECT * FROM products
+WHERE NAME IS NULL
+   OR category IS NULL
+   OR MRP IS NULL
+   OR DISCOUNTPERCENT IS NULL
+   OR AVAILABILITY IS NULL
+   OR DISCOUNTEDPRICE IS NULL
+   OR WEIGHTINGRAMS IS NULL
+   OR OUTOFSTOCK IS NULL
+   OR QUANTITY IS NULL;
+   
+-- product categories
+SELECT DISTINCT CATEGORY FROM products
+order by CATEGORY;
+
+-- check stock or outofstock
+SELECT COUNT(*), OUTOFSTOCK FROM products 
+GROUP BY OUTOFSTOCK;
+
+-- product name present multiple times
+SELECT NAME, COUNT(NAME) AS COUNT FROM products
+GROUP BY NAME
+HAVING COUNT(NAME)>1
+ORDER BY COUNT(NAME) DESC;
+
+-- DATA CLEANING
+-- check price =0
+SELECT * FROM products WHERE MRP =0 OR DISCOUNTEDPRICE =0;
+
+SET SQL_SAFE_UPDATES =0;
+DELETE  FROM products
+ WHERE MRP = 0;
+
+-- CONVERT PAISE INTO RUPEE
+UPDATE products
+SET MRP=MRP/100.0,
+DISCOUNTEDPRICE=DISCOUNTEDPRICE/100.0;
+
+SELECT MRP,DISCOUNTEDPRICE FROM products;
+
+-- Q1. Find the top 10 best-value products based on the discount percentage
+
+SELECT DISTINCT NAME, MRP, DISCOUNTPERCENT
+FROM products
+ORDER BY DISCOUNTPERCENT DESC
+LIMIT 10;
+
+-- Q2. What are the Products with High MRP but Out of Stock
+
+SELECT DISTINCT NAME, MRP
+FROM products
+WHERE OUTOFSTOCK = "TRUE"
+  AND MRP > 300
+ORDER BY MRP DESC;
+
+-- Q3. Calculate Estimated Revenue for each Category.
+
+SELECT CATEGORY,SUM(DISCOUNTEDPRICE * AVAILABILITY) AS total_revenue
+FROM products
+GROUP BY CATEGORY
+ORDER BY total_revenue;
+
+-- Q4. Find all products where MRP is greater than ₹500 and discount is less than 10%.
+
+SELECT NAME,MRP,
+DISCOUNTPERCENT FROM products
+WHERE MRP > 500
+  AND DISCOUNTPERCENT < 10
+ORDER BY MRP DESC;
+
+-- Q5. Identify the top 5 categories offering the highest average discount percentage.
+
+SELECT CATEGORY, AVG(DISCOUNTPERCENT) AS AVG_DISCOUNT
+FROM products
+GROUP BY CATEGORY
+ORDER BY AVG_DISCOUNT DESC
+LIMIT 5;
+
+-- Q6. Find the price per gram for products above 100 g and sort by best value.
+
+SELECT  DISTINCT NAME,WEIGHTINGRAMS,DISCOUNTEDPRICE,
+ROUND(DISCOUNTEDPRICE/ WEIGHTINGRAMS, 2) AS PRICE_PER_GRAM
+FROM products
+WHERE WEIGHTINGRAMS > 100
+ORDER BY PRICE_PER_GRAM;
+
+-- Q7. Group the products into categories like Low, Medium, and Bulk.
+
+SELECT NAME,WEIGHTINGRAMS,
+    CASE
+        WHEN WEIGHTINGRAMS < 1000 THEN 'Low'
+        WHEN WEIGHTINGRAMS BETWEEN 1000 AND 5000 THEN 'Medium'
+        ELSE 'Bulk'
+    END AS WEIGHT_CATEGORY
+FROM products;
+
+-- Q8. What is the Total Inventory Weight Per Category?
+
+SELECT
+    CATEGORY,
+    SUM(WEIGHTINGRAMS * AVAILABILITY) AS TOTAL_INVENTORY_WEIGHT
+FROM products
+GROUP BY CATEGORY
+ORDER BY TOTAL_INVENTORY_WEIGHT DESC;
+
+-- Q9. Find the Top 10 Most Expensive Products by MRP.
+
+SELECT NAME,CATEGORY,MRP
+FROM products
+ORDER BY MRP DESC
+LIMIT 10;
